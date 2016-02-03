@@ -12,30 +12,27 @@ func init() {
 	}
 }
 
-func TestRotate(t *testing.T) {
-	logger := &Logger{
-		Filename: "./test.log",
-	}
-
-	logger.rotate()
-
-	f, err := os.Open("./test_20160203_1540.log")
-	if os.IsNotExist(err) {
-		t.Error("Expect file ./test_20160203_1540.log is exist.")
-	}
-	f.Close()
+var logRotateTestCases = []struct {
+	logger   *Logger
+	filename string
+}{
+	{
+		&Logger{Filename: "./test.log"}, "./test_20160203_1540.log",
+	},
+	{
+		&Logger{Filename: "./test/test.log"}, "./test/test_20160203_1540.log",
+	},
 }
 
-func TestRotate_InFolder(t *testing.T) {
-	logger := &Logger{
-		Filename: "test/test.log",
-	}
+func TestRotate(t *testing.T) {
 
-	logger.rotate()
+	for _, testcase := range logRotateTestCases {
+		testcase.logger.rotate()
 
-	f, err := os.Open("test/test_20160203_1540.log")
-	if os.IsNotExist(err) {
-		t.Error("Expect file test/test_20160203_1540.log is exist.")
+		f, err := os.Open(testcase.filename)
+		if os.IsNotExist(err) {
+			t.Errorf("Expect file %s is exist.", testcase.filename)
+		}
+		f.Close()
 	}
-	f.Close()
 }
