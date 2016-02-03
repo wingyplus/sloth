@@ -16,11 +16,25 @@ type Logger struct {
 }
 
 func (logger *Logger) rotate() error {
+	dir := filepath.Dir(logger.Filename)
 	ext := filepath.Ext(logger.Filename)
 	name := filepath.Base(logger.Filename)
 	prefix := name[:len(name)-len(ext)]
 
-	os.Create(fmt.Sprintf("%s_%s%s", prefix, timeNow().Format("20060102_1504"), ext))
+	if !dirExist(dir) {
+		os.MkdirAll(dir, 0744)
+	}
+	f, err := os.OpenFile(filepath.Join(dir, fmt.Sprintf("%s_%s%s", prefix, timeNow().Format("20060102_1504"), ext)), os.O_CREATE, 0644)
+	defer f.Close()
 
-	return nil
+	return err
+}
+
+func dirExist(dir string) bool {
+	f, err := os.Open(dir)
+	if os.IsNotExist(err) {
+		return false
+	}
+	f.Close()
+	return true
 }

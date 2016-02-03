@@ -25,3 +25,17 @@ func TestRotate(t *testing.T) {
 	}
 	f.Close()
 }
+
+func TestRotate_InFolder(t *testing.T) {
+	logger := &Logger{
+		Filename: "test/test.log",
+	}
+
+	logger.rotate()
+
+	f, err := os.Open("test/test_20160203_1540.log")
+	if os.IsNotExist(err) {
+		t.Error("Expect file test/test_20160203_1540.log is exist.")
+	}
+	f.Close()
+}
