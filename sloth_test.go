@@ -1,6 +1,7 @@
 package sloth
 
 import (
+	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -35,4 +36,30 @@ func TestRotate(t *testing.T) {
 		}
 		f.Close()
 	}
+}
+
+func TestCreateFileAtFirstWrite(t *testing.T) {
+	makeTempDir("TestWrite")
+	defer os.RemoveAll("TestWrite")
+
+	logger := &Logger{
+		Filename: "TestWrite/test-write.log",
+	}
+
+	logger.Write([]byte("Hello world"))
+
+	if len(ls("TestWrite")) != 1 {
+		t.Error("Expect has a file in folder TestWrite")
+	}
+}
+
+func ls(dir string) []os.FileInfo {
+	if infos, err := ioutil.ReadDir(dir); err == nil {
+		return infos
+	}
+	return nil
+}
+
+func makeTempDir(dir string) {
+	os.MkdirAll(dir, 0744)
 }
