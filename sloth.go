@@ -49,13 +49,9 @@ func backup(logfile *os.File) {
 	defer backupfile.Close()
 }
 
-func dirExist(dir string) bool {
-	f, err := os.Open(dir)
-	if os.IsNotExist(err) {
-		return false
-	}
-	f.Close()
-	return true
+func exist(filename string) bool {
+	_, err := os.Stat(filename)
+	return !os.IsNotExist(err)
 }
 
 func openNew(filename string, stamptime bool) (*os.File, error) {
@@ -68,7 +64,7 @@ func openNew(filename string, stamptime bool) (*os.File, error) {
 	name := filepath.Base(filename)
 	prefix := name[:len(name)-len(ext)]
 
-	if !dirExist(dir) {
+	if !exist(dir) {
 		os.MkdirAll(dir, 0744)
 	}
 

@@ -39,11 +39,9 @@ func TestRotate(t *testing.T) {
 	for _, testcase := range logRotateTestCases {
 		testcase.logger.rotate()
 
-		f, err := os.Open(testcase.filename)
-		if os.IsNotExist(err) {
+		if !exist(testcase.filename) {
 			t.Errorf("Expect file %s is exist.", testcase.filename)
 		}
-		f.Close()
 	}
 }
 
