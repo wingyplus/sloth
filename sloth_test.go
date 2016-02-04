@@ -7,17 +7,8 @@ import (
 	"time"
 )
 
-var (
-	oldTime = time.Date(2016, time.February, 3, 15, 40, 0, 0, time.UTC)
-	newTime = time.Date(2016, time.February, 3, 15, 45, 0, 0, time.UTC)
-
-	currentTime = &oldTime
-)
-
 func init() {
-	timeNow = func() time.Time {
-		return *currentTime
-	}
+	resetTime()
 }
 
 var logRotateTestCases = []struct {
@@ -80,6 +71,32 @@ func TestAutoRotate(t *testing.T) {
 	resetTime()
 }
 
+func TestWrite(t *testing.T) {
+	makeTempDir("TestWrite")
+	defer os.RemoveAll("TestWrite")
+
+	logger := &Logger{
+		Filename: "TestWrite/test-write.log",
+		Every:    1 * time.Millisecond,
+	}
+
+	_, err := logger.Write([]byte("Hello world"))
+
+	if err != nil {
+		t.Error(err)
+	}
+	if s := cat("TestWrite/test-write.log"); s != "Hello world" {
+		t.Error("Expect `Hello World` in file content but got", s)
+	}
+}
+
+func cat(filename string) string {
+	if b, err := ioutil.ReadFile(filename); err == nil {
+		return string(b)
+	}
+	return ""
+}
+
 func ls(dir string) []os.FileInfo {
 	if infos, err := ioutil.ReadDir(dir); err == nil {
 		return infos
@@ -92,9 +109,13 @@ func makeTempDir(dir string) {
 }
 
 func updateTime() {
-	*currentTime = newTime
+	timeNow = func() time.Time {
+		return time.Date(2016, time.February, 3, 15, 45, 0, 0, time.UTC)
+	}
 }
 
 func resetTime() {
-	*currentTime = oldTime
+	timeNow = func() time.Time {
+		return time.Date(2016, time.February, 3, 15, 40, 0, 0, time.UTC)
+	}
 }
