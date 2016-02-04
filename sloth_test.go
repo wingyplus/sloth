@@ -25,14 +25,16 @@ var logRotateTestCases = []struct {
 	filename string
 }{
 	{
-		&Logger{Filename: "./test.log"}, "./test_20160203_1540.log",
+		&Logger{Filename: "./TestRotate/test.log"}, "./TestRotate/test_20160203_1540.log",
 	},
 	{
-		&Logger{Filename: "./test/test.log"}, "./test/test_20160203_1540.log",
+		&Logger{Filename: "./TestRotate/InFolder/test.log"}, "./TestRotate/InFolder/test_20160203_1540.log",
 	},
 }
 
 func TestRotate(t *testing.T) {
+	makeTempDir("TestRotate")
+	defer os.RemoveAll("TestRotate")
 
 	for _, testcase := range logRotateTestCases {
 		testcase.logger.rotate()
