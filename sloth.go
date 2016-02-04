@@ -17,13 +17,20 @@ var _ io.Writer = (*Logger)(nil)
 // Logger writes specific to Filename
 type Logger struct {
 	Filename string
+	Every    time.Duration
 
-	file *os.File
+	file      *os.File
+	createdAt time.Time
 }
 
 func (logger *Logger) Write(b []byte) (n int, err error) {
 	if logger.file == nil {
 		logger.file, err = openNew(logger.Filename, false)
+		logger.createdAt = timeNow()
+	}
+
+	if now := timeNow(); logger.Every > 0 && now.Sub(logger.createdAt) >= logger.Every {
+		backup(logger.file)
 	}
 	return
 }
@@ -32,6 +39,14 @@ func (logger *Logger) rotate() error {
 	f, err := openNew(logger.Filename, true)
 	defer f.Close()
 	return err
+}
+
+func backup(logfile *os.File) {
+	backupfile, err := openNew(logfile.Name(), true)
+	if err != nil {
+		return
+	}
+	defer backupfile.Close()
 }
 
 func dirExist(dir string) bool {
