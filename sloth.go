@@ -39,8 +39,10 @@ func (f *File) Close() error {
 	return f.file.Close()
 }
 
+func (f *File) Name() string { return f.file.Name() }
+
 func backup(f *File) {
-	name := f.file.Name()
+	name := f.Name()
 	f.Close()
 
 	backupfile, err := openNew(name, true)
