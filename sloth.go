@@ -14,7 +14,7 @@ var timeNow = time.Now
 // Make sure Logger always implements io.Writer
 var _ io.WriteCloser = (*File)(nil)
 
-// Logger writes specific to Filename
+// File wrap os.File to manage rotate logic
 type File struct {
 	Filename string
 	Every    time.Duration
@@ -23,6 +23,7 @@ type File struct {
 	createdAt time.Time
 }
 
+// Write data to the file
 func (f *File) Write(b []byte) (n int, err error) {
 	if f.file == nil {
 		f.file, err = openNew(f.Filename, false)
@@ -35,10 +36,12 @@ func (f *File) Write(b []byte) (n int, err error) {
 	return f.file.Write(b)
 }
 
+// Close the file
 func (f *File) Close() error {
 	return f.file.Close()
 }
 
+// Name return file name
 func (f *File) Name() string { return f.file.Name() }
 
 func backup(f *File) {
