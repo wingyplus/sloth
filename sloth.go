@@ -39,12 +39,6 @@ func (logger *Logger) Close() error {
 	return logger.file.Close()
 }
 
-func (logger *Logger) rotate() error {
-	f, err := openNew(logger.Filename, true)
-	defer f.Close()
-	return err
-}
-
 func backup(logger *Logger) {
 	name := logger.file.Name()
 	logger.Close()

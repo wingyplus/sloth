@@ -11,32 +11,6 @@ func init() {
 	resetTime()
 }
 
-var logRotateTestCases = []struct {
-	logger   *Logger
-	filename string
-}{
-	{
-		&Logger{Filename: "./TestRotate/test.log"}, "./TestRotate/test_20160203_1540.log",
-	},
-	{
-		&Logger{Filename: "./TestRotate/InFolder/test.log"}, "./TestRotate/InFolder/test_20160203_1540.log",
-	},
-}
-
-func TestRotate(t *testing.T) {
-	makeTempDir("TestRotate")
-	defer os.RemoveAll("TestRotate")
-
-	for _, testcase := range logRotateTestCases {
-		testcase.logger.rotate()
-		defer testcase.logger.Close()
-
-		if !exist(testcase.filename) {
-			t.Errorf("Expect file %s is exist.", testcase.filename)
-		}
-	}
-}
-
 func TestCreateFileAtFirstWrite(t *testing.T) {
 	makeTempDir("TestWrite")
 	defer os.RemoveAll("TestWrite")
