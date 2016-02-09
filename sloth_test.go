@@ -29,6 +29,7 @@ func TestRotate(t *testing.T) {
 
 	for _, testcase := range logRotateTestCases {
 		testcase.logger.rotate()
+		defer testcase.logger.Close()
 
 		if !exist(testcase.filename) {
 			t.Errorf("Expect file %s is exist.", testcase.filename)
@@ -43,6 +44,7 @@ func TestCreateFileAtFirstWrite(t *testing.T) {
 	logger := &Logger{
 		Filename: "TestWrite/test-write.log",
 	}
+	defer logger.Close()
 
 	logger.Write([]byte("Hello world"))
 
@@ -59,6 +61,7 @@ func TestAutoRotate(t *testing.T) {
 		Filename: "TestAutoRotate/test-auto-rotate.log",
 		Every:    1 * time.Millisecond,
 	}
+	defer logger.Close()
 
 	logger.Write([]byte("Hello world"))
 	updateTime()
@@ -66,6 +69,9 @@ func TestAutoRotate(t *testing.T) {
 
 	if total := len(ls("TestAutoRotate")); total != 2 {
 		t.Error("Expect have 2 file in folder TestWrite but got", total)
+	}
+	if s := cat("TestAutoRotate/test-auto-rotate_20160203_1545.log"); s != "Hello world" {
+		t.Error("Expect `Hello World` in file content but got", s)
 	}
 
 	resetTime()
@@ -79,6 +85,7 @@ func TestWrite(t *testing.T) {
 		Filename: "TestWrite/test-write.log",
 		Every:    1 * time.Millisecond,
 	}
+	defer logger.Close()
 
 	_, err := logger.Write([]byte("Hello world"))
 

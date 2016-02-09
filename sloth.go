@@ -12,7 +12,7 @@ import (
 var timeNow = time.Now
 
 // Make sure Logger always implements io.Writer
-var _ io.Writer = (*Logger)(nil)
+var _ io.WriteCloser = (*Logger)(nil)
 
 // Logger writes specific to Filename
 type Logger struct {
@@ -30,10 +30,13 @@ func (logger *Logger) Write(b []byte) (n int, err error) {
 	}
 
 	if now := timeNow(); logger.Every > 0 && now.Sub(logger.createdAt) >= logger.Every {
-		backup(logger.file)
+		backup(logger)
 	}
-
 	return logger.file.Write(b)
+}
+
+func (logger *Logger) Close() error {
+	return logger.file.Close()
 }
 
 func (logger *Logger) rotate() error {
@@ -42,12 +45,20 @@ func (logger *Logger) rotate() error {
 	return err
 }
 
-func backup(logfile *os.File) {
-	backupfile, err := openNew(logfile.Name(), true)
+func backup(logger *Logger) {
+	name := logger.file.Name()
+	logger.Close()
+
+	backupfile, err := openNew(name, true)
 	if err != nil {
 		return
 	}
 	defer backupfile.Close()
+
+	logger.file, _ = openNew(name, false)
+	if _, err := io.Copy(backupfile, logger.file); err != nil {
+		panic(err)
+	}
 }
 
 func exist(filename string) bool {
@@ -57,7 +68,7 @@ func exist(filename string) bool {
 
 func openNew(filename string, stamptime bool) (*os.File, error) {
 	if !stamptime {
-		return os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+		return os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	}
 
 	dir := filepath.Dir(filename)
@@ -69,5 +80,5 @@ func openNew(filename string, stamptime bool) (*os.File, error) {
 		os.MkdirAll(dir, 0744)
 	}
 
-	return os.OpenFile(filepath.Join(dir, fmt.Sprintf("%s_%s%s", prefix, timeNow().Format("20060102_1504"), ext)), os.O_CREATE, 0644)
+	return os.OpenFile(filepath.Join(dir, fmt.Sprintf("%s_%s%s", prefix, timeNow().Format("20060102_1504"), ext)), os.O_CREATE|os.O_WRONLY, 0644)
 }
