@@ -15,12 +15,12 @@ func TestCreateFileAtFirstWrite(t *testing.T) {
 	makeTempDir("TestWrite")
 	defer os.RemoveAll("TestWrite")
 
-	logger := &Logger{
+	f := &File{
 		Filename: "TestWrite/test-write.log",
 	}
-	defer logger.Close()
+	defer f.Close()
 
-	logger.Write([]byte("Hello world"))
+	f.Write([]byte("Hello world"))
 
 	if len(ls("TestWrite")) != 1 {
 		t.Error("Expect has a file in folder TestWrite")
@@ -31,15 +31,15 @@ func TestAutoRotate(t *testing.T) {
 	makeTempDir("TestAutoRotate")
 	defer os.RemoveAll("TestAutoRotate")
 
-	logger := &Logger{
+	f := &File{
 		Filename: "TestAutoRotate/test-auto-rotate.log",
 		Every:    1 * time.Millisecond,
 	}
-	defer logger.Close()
+	defer f.Close()
 
-	logger.Write([]byte("Hello world"))
+	f.Write([]byte("Hello world"))
 	updateTime()
-	logger.Write([]byte("Hello world"))
+	f.Write([]byte("Hello world"))
 
 	if total := len(ls("TestAutoRotate")); total != 2 {
 		t.Error("Expect have 2 file in folder TestWrite but got", total)
@@ -55,13 +55,13 @@ func TestWrite(t *testing.T) {
 	makeTempDir("TestWrite")
 	defer os.RemoveAll("TestWrite")
 
-	logger := &Logger{
+	f := &File{
 		Filename: "TestWrite/test-write.log",
 		Every:    1 * time.Millisecond,
 	}
-	defer logger.Close()
+	defer f.Close()
 
-	_, err := logger.Write([]byte("Hello world"))
+	_, err := f.Write([]byte("Hello world"))
 
 	if err != nil {
 		t.Error(err)

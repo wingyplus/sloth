@@ -12,10 +12,10 @@ import (
 var timeNow = time.Now
 
 // Make sure Logger always implements io.Writer
-var _ io.WriteCloser = (*Logger)(nil)
+var _ io.WriteCloser = (*File)(nil)
 
 // Logger writes specific to Filename
-type Logger struct {
+type File struct {
 	Filename string
 	Every    time.Duration
 
@@ -23,25 +23,25 @@ type Logger struct {
 	createdAt time.Time
 }
 
-func (logger *Logger) Write(b []byte) (n int, err error) {
-	if logger.file == nil {
-		logger.file, err = openNew(logger.Filename, false)
-		logger.createdAt = timeNow()
+func (f *File) Write(b []byte) (n int, err error) {
+	if f.file == nil {
+		f.file, err = openNew(f.Filename, false)
+		f.createdAt = timeNow()
 	}
 
-	if now := timeNow(); logger.Every > 0 && now.Sub(logger.createdAt) >= logger.Every {
-		backup(logger)
+	if now := timeNow(); f.Every > 0 && now.Sub(f.createdAt) >= f.Every {
+		backup(f)
 	}
-	return logger.file.Write(b)
+	return f.file.Write(b)
 }
 
-func (logger *Logger) Close() error {
-	return logger.file.Close()
+func (f *File) Close() error {
+	return f.file.Close()
 }
 
-func backup(logger *Logger) {
-	name := logger.file.Name()
-	logger.Close()
+func backup(f *File) {
+	name := f.file.Name()
+	f.Close()
 
 	backupfile, err := openNew(name, true)
 	if err != nil {
@@ -49,8 +49,9 @@ func backup(logger *Logger) {
 	}
 	defer backupfile.Close()
 
-	logger.file, _ = openNew(name, false)
-	if _, err := io.Copy(backupfile, logger.file); err != nil {
+	f.file, _ = openNew(name, false)
+	f.createdAt = timeNow()
+	if _, err := io.Copy(backupfile, f.file); err != nil {
 		panic(err)
 	}
 }
