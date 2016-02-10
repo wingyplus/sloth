@@ -26,12 +26,19 @@ type File struct {
 // Write data to the file
 func (f *File) Write(b []byte) (n int, err error) {
 	if f.file == nil {
-		f.file, err = openNew(f.Filename, false)
-		f.createdAt = timeNow()
+		if err = f.openNew(); err != nil {
+			return
+		}
 	}
 
 	if now := timeNow(); f.Every > 0 && now.Sub(f.createdAt) >= f.Every {
-		backup(f)
+		if err = f.backup(); err != nil {
+			return
+		}
+
+		if err = f.openNew(); err != nil {
+			return
+		}
 	}
 	return f.file.Write(b)
 }
@@ -44,21 +51,17 @@ func (f *File) Close() error {
 // Name return file name
 func (f *File) Name() string { return f.file.Name() }
 
-func backup(f *File) {
+func (f *File) backup() error {
 	name := f.Name()
 	f.Close()
 
-	backupfile, err := openNew(name, true)
-	if err != nil {
-		return
-	}
-	defer backupfile.Close()
+	return os.Rename(name, filepath.Join(filepath.Dir(name), backupName(name)))
+}
 
-	f.file, _ = openNew(name, false)
+func (f *File) openNew() (err error) {
+	f.file, err = os.OpenFile(f.Filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
 	f.createdAt = timeNow()
-	if _, err := io.Copy(backupfile, f.file); err != nil {
-		panic(err)
-	}
+	return
 }
 
 func exist(filename string) bool {
@@ -66,19 +69,10 @@ func exist(filename string) bool {
 	return !os.IsNotExist(err)
 }
 
-func openNew(filename string, stamptime bool) (*os.File, error) {
-	if !stamptime {
-		return os.OpenFile(filename, os.O_CREATE|os.O_APPEND|os.O_RDWR, 0644)
-	}
-
-	dir := filepath.Dir(filename)
+func backupName(filename string) string {
 	ext := filepath.Ext(filename)
 	name := filepath.Base(filename)
 	prefix := name[:len(name)-len(ext)]
 
-	if !exist(dir) {
-		os.MkdirAll(dir, 0744)
-	}
-
-	return os.OpenFile(filepath.Join(dir, fmt.Sprintf("%s_%s%s", prefix, timeNow().Format("20060102_1504"), ext)), os.O_CREATE|os.O_WRONLY, 0644)
+	return fmt.Sprintf("%s_%s%s", prefix, timeNow().Format("20060102_1504"), ext)
 }

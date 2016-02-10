@@ -51,6 +51,27 @@ func TestAutoRotate(t *testing.T) {
 	resetTime()
 }
 
+func TestCleanMainLog(t *testing.T) {
+	makeTempDir("TestClearMainLog")
+	defer os.RemoveAll("TestClearMainLog")
+
+	f := &File{
+		Filename: "TestClearMainLog/test-auto-rotate.log",
+		Every:    1 * time.Millisecond,
+	}
+	defer f.Close()
+
+	f.Write([]byte("Hello world"))
+	updateTime()
+	f.Write([]byte("Hello world 2"))
+
+	if cat("TestClearMainLog/test-auto-rotate.log") != "Hello world 2" {
+		t.Error("Main log should clean after backup log")
+	}
+
+	resetTime()
+}
+
 func TestWrite(t *testing.T) {
 	makeTempDir("TestWrite")
 	defer os.RemoveAll("TestWrite")
