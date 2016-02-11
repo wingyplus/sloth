@@ -64,11 +64,6 @@ func (f *File) openNew() (err error) {
 	return
 }
 
-func exist(filename string) bool {
-	_, err := os.Stat(filename)
-	return !os.IsNotExist(err)
-}
-
 func backupName(filename string) string {
 	ext := filepath.Ext(filename)
 	name := filepath.Base(filename)
